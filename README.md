@@ -19,4 +19,8 @@ EvalRAG/
 │── notebooks/ # Experiment notebooks
 │── README.md # Project documentation
 
+## Data Source
+data used come from repo: https://github.com/yixuantt/MultiHop-RAG/tree/main
+
+
 
