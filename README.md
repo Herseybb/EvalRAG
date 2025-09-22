@@ -22,5 +22,9 @@ EvalRAG/
 ## Data Source
 data used come from repo: https://github.com/yixuantt/MultiHop-RAG/tree/main
 
+## 📝 Self-Learning Log
+Date/Phase | What I Did | What I Learned | Next Steps | Things to Explore Further
+2025-09-22 | Found a prepared dataset (mentioned above); Created a basic RAG infrastructure which can split chunks, create index, and generate answers based on llm; | basic steps for RAG | create metrics and infrastructure for evaluation of results | theory knowledge for transformers and FAISS
+
 
 
