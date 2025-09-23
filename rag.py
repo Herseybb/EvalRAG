@@ -2,11 +2,14 @@ from data_loader import load_corpus, load_qa_pair
 from chunk_spliter import chunk_text_by_token
 from indexer import faiss_index
 from llm.llm_farm import get_response
+from retrieval_eval import RetrievalEvaluator
+from generation_eval import GenerationEvaluator
 
 
 import pickle
 import faiss
 import numpy as np
+import pandas as pd
 from sentence_transformers import SentenceTransformer
 
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
@@ -56,17 +59,18 @@ def generate_answer(chunks, query, top_k=3):
     
     # retrival topk
     distances, indices = index.search(q_vec, top_k)
-    retrieved_chunks = [chunks[i]["text"] for i in indices[0]]    
+    retrieved_chunks = [chunks[i] for i in indices[0]]
+    retrieved_texts = [chunks[i]["text"] for i in indices[0]]    
     
     # create prompt
-    context = "\n\n".join(retrieved_chunks)
+    context = "\n\n".join(retrieved_texts)
     prompt = ""\
         "Use the following context to answer the question as accurately as possible."\
         "\n"\
         "Context:\n"\
         f"{context}"\
         '\n'\
-        "Question: {query}"\
+        f"Question: {query}"\
         "\n"\
         "Answer:"
     messages=[
@@ -76,31 +80,88 @@ def generate_answer(chunks, query, top_k=3):
                 ]
     response = get_response(messages=messages, stream=False)
     
-    return response
+    return response, retrieved_chunks
 
 if __name__ == "__main__":
     
     # load chunks metadata and index
     chunks, index = load_index()
     
-    # query example
     qa_pair = load_qa_pair()
-    query = qa_pair[0]['query']
-    answer = generate_answer(chunks, query)
-    # query_vec = model.encode([query], convert_to_numpy=True)
-
-    # k = 2  # top-k
-    # distances, indices = index.search(query_vec, k)
-    # print("\n🔎 Query:", query)
-    # print("Results:")
-    # for i, idx in enumerate(indices[0]):
-    #     doc = chunks[idx]
-    #     print(f"Rank {i+1} | Score {distances[0][i]:.4f}")
-    #     print(f"Title: {doc['title']}")
-    #     print(f"URL: {doc['url']}")
-    #     print(f"Text: {doc['text'][:200]}...\n")
     
-    # print(qa_pair[0]['evidence_list']) 
+    qa_pair = qa_pair[:10] # for test
+    
+    # query loop
+    retrieved_ids = []
+    gold_ids = []
+    gold_answers = []
+    generation_answers = []
+    
+    results = []
+    for qa in qa_pair:
+        query = qa['query']
+        answer, retrieved_chunks = generate_answer(chunks, query, top_k=5)
+
+        # retrieval metrics
+        # retrieved doc ids (in lists)
+        retrieved_id = [chunk['doc_id']  for chunk in retrieved_chunks]
+        
+        # gold doc ids
+        gold_id = []
+        for evidence in qa['evidence_list']:
+            doc_id = next(
+                (d['doc_id'] for d in chunks
+                 if d["title"]==evidence['title'] and d['published_at']==evidence['published_at']),
+                None
+            )
+            gold_id.append(doc_id)
+        
+        
+        # metrics
+        retrieval_evaluator = RetrievalEvaluator(retrieved_list=[retrieved_id], gold_list=[gold_id])
+        hit_at_1 = retrieval_evaluator.hit_at_k(1)
+        hit_at_3 = retrieval_evaluator.hit_at_k(3)
+        hit_at_5 = retrieval_evaluator.hit_at_k(5)
+        rr = retrieval_evaluator.mrr()
+        
+        gen_evaluator = GenerationEvaluator(generation_list=[answer], gold_list=[qa['answer']])
+        score_meteor = gen_evaluator.meteor()
+        
+        retrieved_ids.append(retrieved_id)
+        gold_ids.append(gold_id)
+        gold_answers.append(qa['answer'])
+        generation_answers.append(answer)
+        
+        # save results
+        results.append({
+            "query": query,
+            "gen_answer": answer,
+            "gold_answer": qa['answer'],
+            "gold_ids": gold_id,
+            "retrieved_ids": retrieved_id,
+            "hit@1": hit_at_1,
+            "hit@3": hit_at_3,
+            "hit@5": hit_at_5,
+            "rr": rr,
+            "meteor": score_meteor
+        })
+        
+    # metrics
+    retrieval_evaluator = RetrievalEvaluator(retrieved_list=retrieved_ids, gold_list=gold_ids)
+    gen_evaluator = GenerationEvaluator(generation_list=generation_answers, gold_list=gold_answers)
+    
+    hit_at_1 = retrieval_evaluator.hit_at_k(1)
+    hit_at_3 = retrieval_evaluator.hit_at_k(3)
+    hit_at_5 = retrieval_evaluator.hit_at_k(5)
+    meteor = gen_evaluator.meteor()
+    
+    df_result = pd.DataFrame(results)
+    df_result.to_csv(r"result/result.csv", index=None)
+    
+    
+    
+        
+    
         
         
     print(query)
