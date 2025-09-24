@@ -10,6 +10,7 @@ import pickle
 import faiss
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
 
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
@@ -65,7 +66,7 @@ def generate_answer(chunks, query, top_k=3):
     # create prompt
     context = "\n\n".join(retrieved_texts)
     prompt = ""\
-        "Use the following context to answer the question as accurately as possible."\
+        "Use the following context to answer the question as accurately as possible. Keep your answer concise (2-3 sentences maximum)"\
         "\n"\
         "Context:\n"\
         f"{context}"\
@@ -157,12 +158,3 @@ if __name__ == "__main__":
     
     df_result = pd.DataFrame(results)
     df_result.to_csv(r"result/result.csv", index=None)
-    
-    
-    
-        
-    
-        
-        
-    print(query)
-    print(answer)
