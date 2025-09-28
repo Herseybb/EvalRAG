@@ -27,6 +27,7 @@ data used come from repo: https://github.com/yixuantt/MultiHop-RAG/tree/main
 | ------------ | ------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------- |
 | 2025-09-22 | Found a prepared dataset (mentioned above); Created a basic RAG infrastructure which can split chunks, create index, and generate answers based on llm; | basic steps for RAG | create metrics and infrastructure for evaluation of results | theory knowledge for transformers and FAISS
 | 2025-09-23 | Created basic evaluation framework, include retrieval metrics hit@k, mrr, and generation metrics meteor | basic metrics for RAG | how to decide which part needs improvement? how to improve? | Deep dive into metrics meteor, is it suitable? any better choice? |
+| 2025-09-28 | Add re-ranker to improve retrieval quality; Add embedding metrics for generation; Add precision metrics for retrieval; | Logic of re-ranker | Retrieval quaility seems need further improvement 
 
 
 
