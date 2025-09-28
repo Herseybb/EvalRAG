@@ -1,4 +1,5 @@
 from nltk.translate.meteor_score import meteor_score
+from sentence_transformers import util
 
 class GenerationEvaluator:
     def __init__(self, generation_list, gold_list):
@@ -17,4 +18,16 @@ class GenerationEvaluator:
         for gen, gold in zip(self.generation_list, self.gold_list):
             score = meteor_score([gold.split()], gen.split())
             scores.append(score)
+        return sum(scores) / len(scores)
+
+    def embed(self, model):
+        
+        scores = []
+        for gen, gold in zip(self.generation_list, self.gold_list):
+            gen_emb = model.encode(gen, convert_to_tensor=True)
+            gold_emb = model.encode(gold, convert_to_tensor=True)
+            cos_sim = util.cos_sim(gold_emb, gen_emb).item()
+            
+            scores.append(cos_sim)
+        
         return sum(scores) / len(scores)

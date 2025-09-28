@@ -45,24 +45,3 @@ def chunk_text_by_token(text: str, chunk_size: int = 200, overlap: int = 50) -> 
         chunks = overlapped_chunks
     
     return chunks
-
-
-
-if __name__ == '__main__':
-    
-    # 对每篇文档做 chunk
-    chunked_docs = []
-    for doc_id, doc in enumerate(docs):
-        chunks = chunk_text_by_token(doc['body'], chunk_size=200, overlap=50)
-        for i, chunk in enumerate(chunks):
-            chunked_docs.append({
-                'doc_id': doc_id,
-                'chunk_id': i,
-                'title': doc['title'],
-                'url': doc['url'],
-                'text': chunk
-            })
-
-    # 查看前几个 chunk
-    for c in chunked_docs[:2]:
-        print(c)
