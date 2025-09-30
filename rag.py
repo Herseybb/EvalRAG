@@ -1,6 +1,4 @@
-from data_loader import load_corpus, load_qa_pair
-from chunk_spliter import chunk_text_by_token
-from indexer import faiss_index
+from data_loader import load_qa_pair
 from llm.llm_farm import get_response
 from retrieval_eval import RetrievalEvaluator
 from generation_eval import GenerationEvaluator
@@ -13,41 +11,13 @@ import pandas as pd
 from tqdm import tqdm
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
-model = SentenceTransformer(r"C:\Users\cui8szh\.cache\huggingface\hub\models--sentence-transformers--all-MiniLM-L6-v2\snapshots\c9745ed1d9f207416be6d2e6f8de32d1f16199bf")
+model = SentenceTransformer(r"C:\Users\cui8szh\.cache\huggingface\hub\models--sentence-transformers--multi-qa-mpnet-base-dot-v1\snapshots\\17997f24dca0df1a4fed68894fb0e1e133e60482")
 reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
-def create_index():
-    corpus = load_corpus()
-    
-    # split chunks
-    chunked_docs = []
-    for doc_id, doc in enumerate(corpus):
-        chunks = chunk_text_by_token(doc['body'], chunk_size=200, overlap=50)
-        for i, chunk in enumerate(chunks):
-            chunked_docs.append({
-                'doc_id': doc_id,
-                'chunk_id': i,
-                'title': doc['title'],
-                'author': doc['author'],
-                'source': doc['source'],
-                'published_at': doc['published_at'],
-                'category': doc['category'],
-                'url': doc['url'],
-                'text': chunk
-            })
-
-    # save chunks
-    with open("data/metadata.pkl", "wb") as f:
-        pickle.dump(chunks, f)
-    
-    # index
-    index = faiss_index(chunked_docs, model)
-    # save index
-    faiss.write_index(index, "data/index1.index")
 
 def load_index():
-    index = faiss.read_index("data/index1.index")
-    with open("data/metadata.pkl", 'rb') as f:
+    index = faiss.read_index("data/index3.index")
+    with open("data/metadata3.pkl", 'rb') as f:
         chunks = pickle.load(f)
         
     return chunks, index
@@ -108,7 +78,7 @@ if __name__ == "__main__":
     
     qa_pair = load_qa_pair()
     
-    qa_pair = qa_pair[20:30] # for test
+    # qa_pair = qa_pair[20:30] # for test
     
     # query loop
     retrieved_ids = []
@@ -232,4 +202,4 @@ if __name__ == "__main__":
     # df_result.to_csv(r"result/result.csv", index=None)
     
     df_rerank_eval = pd.DataFrame(rerank_eval)
-    df_rerank_eval.to_excel(r"result/result.xlsx", index=None)
+    df_rerank_eval.to_excel(r"result/result_index3.xlsx", index=None)

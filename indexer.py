@@ -10,7 +10,7 @@ def embed(chunks, model):
     
     return embeddings
 
-def faiss_index(chunks, model, save):
+def faiss_index(chunks, model):
     
     embeddings = embed(chunks, model)
     embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
